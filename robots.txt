@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://study123.co.kr/sitemap.xml
