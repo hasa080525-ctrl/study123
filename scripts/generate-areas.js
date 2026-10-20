@@ -54,6 +54,32 @@ function topicParticle(name) {
 function regionSlug(region, track) { return `${region.name}-${track.label}`; }
 function districtSlug(region, district, track) { return `${region.name}-${baseName(district)}-${track.label}`; }
 
+// Structured data helpers. Breadcrumb mirrors the visible .breadcrumb trail
+// on each page; FAQ JSON-LD mirrors faqMini()'s visible Q&A verbatim.
+function breadcrumbJsonLd(items) {
+  return `<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+${items.map((it, i) => `    {"@type": "ListItem", "position": ${i + 1}, "name": ${JSON.stringify(it.name)}, "item": ${JSON.stringify(it.url)}}`).join(',\n')}
+  ]
+}
+</script>`;
+}
+function faqJsonLd() {
+  return `<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "방문 수업도 가능한가요?", "acceptedAnswer": {"@type": "Answer", "text": "화상 수업은 전국 어디서나 동일하게 가능하며, 방문·카페·스터디카페 수업은 지역에 따라 배정 가능한 선생님을 상담 시 안내해드립니다."}},
+    {"@type": "Question", "name": "몇 점 이상이면 합격인가요?", "acceptedAnswer": {"@type": "Answer", "text": "응시 과목 전체 평균 60점 이상이면 합격입니다. 과목별 과락 기준은 없어 한 과목 점수가 낮더라도 전체 평균만 넘으면 합격할 수 있습니다."}}
+  ]
+}
+</script>`;
+}
+
 function head(title, desc, canonical, keywords) {
   return `<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -119,11 +145,18 @@ function regionPageTemplate(region, track) {
   const districtLinks = region.districts.length
     ? region.districts.map(d => `<a href="/areas/${encodeURIComponent(districtSlug(region, d, track))}.html">${region.name} ${baseName(d)} ${track.label}</a>`).join('\n          ')
     : '';
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: '홈', url: `${SITE}/` },
+    { name: '지역별 검정고시', url: `${SITE}/areas/` },
+    { name: `${region.name} ${track.label}`, url: canonical },
+  ]);
 
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
 ${head(title, desc, canonical, keywords)}
+${breadcrumbLd}
+${faqJsonLd()}
 </head>
 <body>
 ${header()}
@@ -182,11 +215,19 @@ function districtPageTemplate(region, district, track) {
   const keywords = `${district_}${track.label}, ${district_} ${track.label}, ${region.name}${district_}검정고시, ${track.label}`;
   const hasSub = /\(.*\)$/.test(district);
   const subNote = hasSub ? district.match(/\((.*)\)$/)[1] : '';
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: '홈', url: `${SITE}/` },
+    { name: '지역별 검정고시', url: `${SITE}/areas/` },
+    { name: `${region.name} ${track.label}`, url: `${SITE}${parentUrl}` },
+    { name: district_, url: canonical },
+  ]);
 
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
 ${head(title, desc, canonical, keywords)}
+${breadcrumbLd}
+${faqJsonLd()}
 </head>
 <body>
 ${header()}
@@ -239,10 +280,16 @@ function hubTemplate() {
       </div>`;
   }).join('\n');
 
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: '홈', url: `${SITE}/` },
+    { name: '지역별 검정고시', url: `${SITE}/areas/` },
+  ]);
+
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
 ${head('전국 지역별 검정고시 전체 목록 | 스터디123', '전국 16개 광역지자체, 시/군/구, 초졸·중졸·고졸 검정고시 안내 페이지 모음입니다.', `${SITE}/areas/`, '전국 검정고시, 지역별 검정고시, 초졸검정고시, 중졸검정고시, 고졸검정고시')}
+${breadcrumbLd}
 </head>
 <body>
 ${header()}
